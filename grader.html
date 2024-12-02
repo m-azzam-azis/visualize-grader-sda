@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Query Results with Color Coding</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .AC {
+      color: green;
+    }
+
+    .SG {
+      color: rgb(255, 166, 0);
+    }
+
+    .TLE {
+      color: magenta;
+    }
+
+    .WA {
+      color: red;
+    }
+
+    .query-section {
+      margin-bottom: 20px;
+    }
+
+    .query-section h3 {
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th,
+    td {
+      /* padding: 8px 12px; */
+      text-align: left;
+      text: 12px;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+    }
+
+    /* New Grid Layout */
+    .container {
+      display: flex;
+      gap: 20px;
+      /* Space between the tables */
+    }
+
+    /* Adjustments for specific tables */
+    .query-section:nth-child(1) {
+      order: 1;
+    }
+
+    .query-section:nth-child(3) {
+      order: 2;
+    }
+
+    .query-section:nth-child(5) {
+      order: 3;
+    }
+
+    .query-section:nth-child(7) {
+      order: 4;
+    }
+
+    .query-section:nth-child(2) {
+      order: 5;
+      /* Third row */
+    }
+
+    .query-section:nth-child(4) {
+      order: 6;
+    }
+
+    .query-section:nth-child(6) {
+      order: 7;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Query Results with Color Coding</h1>
+
+  <div class="input-section">
+    <label for="inputData">Paste your input data here:</label><br>
+    <textarea id="inputData"></textarea><br>
+    <button onclick="processData()">Process Data</button>
+  </div>
+
+  <div class="container" id="results"></div>
+
+  <script>
+    const sections = {
+      "R": [1, 10],
+      "J": [11, 30],
+      "F": [31, 40],
+      "R, M": [41, 50],
+      "F, M": [51, 60],
+      "R, F, M": [61, 85],
+      "R, F, M, J": [86, 100]
+    };
+
+    function processData() {
+      const rawData = document.getElementById("inputData").value.trim();
+      const lines = rawData.split("\n");
+
+      const data = [];
+
+      // Parse the raw input data into a structured format
+      lines.forEach(line => {
+        const parts = line.split("\t");
+        parts.forEach(part => {
+          const [index, statusTime] = part.split(":");
+          const [status, time] = statusTime.trim().split(" ");
+
+          data.push({
+            index: parseInt(index.trim()),
+            status: status.trim(),
+            time: time.trim()
+          });
+        });
+      });
+
+      displayResults(data);
+    }
+
+    function displayResults(data) {
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "";
+
+      const output = {};
+
+      // Organize data by query type
+      data.forEach(entry => {
+        for (const [queryType, range] of Object.entries(sections)) {
+          const [start, end] = range;
+          if (entry.index >= start && entry.index <= end) {
+            if (!output[queryType]) output[queryType] = [];
+            const coloredStatus = colorStatus(entry.status);
+            output[queryType].push({
+              index: entry.index,
+              status: coloredStatus,
+              time: entry.time
+            });
+          }
+        }
+      });
+
+      // Create tables for each query type and display results
+      Object.entries(output).forEach(([queryType, results], idx) => {
+        const sectionDiv = document.createElement("div");
+        sectionDiv.classList.add("query-section");
+
+        const header = document.createElement("h3");
+        header.innerText = `Query ${queryType}:`;
+        sectionDiv.appendChild(header);
+
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+
+        // Table headers
+        const indexHeader = document.createElement("th");
+        indexHeader.innerText = "Index";
+        const statusHeader = document.createElement("th");
+        statusHeader.innerText = "Status";
+        const timeHeader = document.createElement("th");
+        timeHeader.innerText = "Time";
+
+        headerRow.appendChild(indexHeader);
+        headerRow.appendChild(statusHeader);
+        headerRow.appendChild(timeHeader);
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+
+        // Add each result as a table row
+        results.forEach(result => {
+          const row = document.createElement("tr");
+
+          const indexCell = document.createElement("td");
+          indexCell.innerText = result.index;
+
+          const statusCell = document.createElement("td");
+          statusCell.classList.add(result.status);
+          statusCell.innerText = result.status;
+
+          const timeCell = document.createElement("td");
+          timeCell.innerText = result.time;
+
+          row.appendChild(indexCell);
+          row.appendChild(statusCell);
+          row.appendChild(timeCell);
+
+          tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+        sectionDiv.appendChild(table);
+        resultsDiv.appendChild(sectionDiv);
+      });
+    }
+
+    function colorStatus(status) {
+      // Return the corresponding class for the color coding
+      if (status === "AC") return "AC";
+      if (status === "SG") return "SG";
+      if (status === "TLE") return "TLE";
+      if (status === "WA") return "WA";
+      return status;  // Default case
+    }
+  </script>
+
+</body>
+
+</html>
